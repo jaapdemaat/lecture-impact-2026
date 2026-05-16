@@ -1723,6 +1723,7 @@ onScrollVisible(document.getElementById('sankeyDiagram').closest('.section'), ()
 // ==================== STUDENT HEATMAP (D3) ====================
 function renderHeatmap() {
   const container = document.getElementById('heatmapDiagram');
+  if (container.querySelector('svg')) return;
 
   const studentLectures = {};
   DATA.mentions.forEach(m => {
@@ -1735,7 +1736,9 @@ function renderHeatmap() {
     );
   });
 
-  const lectureNames = sortedLectures.slice(0, 12).map(([n]) => n);
+  const lectureNames = sortedLectures.slice(0, 12)
+    .sort(([,a], [,b]) => (a.week || 99) - (b.week || 99))
+    .map(([n]) => n);
   const studentIds = Object.keys(studentLectures).sort();
 
   const cellW = 8;
