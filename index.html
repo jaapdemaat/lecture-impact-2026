@@ -1400,6 +1400,7 @@ document.getElementById('recommendations').innerHTML = `
 // ==================== CHORD DIAGRAM (D3) ====================
 function renderChordDiagram() {
   const container = document.getElementById('chordDiagram');
+  if (container.querySelector('svg')) return;
   const width = Math.min(container.clientWidth, 700);
   const height = width;
   const outerRadius = width / 2 - 80;
@@ -1512,6 +1513,7 @@ onScrollVisible(document.getElementById('chordDiagram').closest('.section'), () 
 // ==================== SANKEY DIAGRAM (D3) ====================
 function renderSankeyDiagram() {
   const container = document.getElementById('sankeyDiagram');
+  if (container.querySelector('svg')) return;
   const width = container.clientWidth;
   const height = 500;
 
