@@ -1004,14 +1004,8 @@ function createWeeklyChart() {
           stacked: true,
           grid: { display: false },
           ticks: {
-            callback: function(val, i) {
-              const title = WEEK_TITLES[i+1] || '';
-              const short = title.length > 25 ? title.slice(0, 23) + '…' : title;
-              return [`W${i+1}`, short];
-            },
-            maxRotation: 45,
-            minRotation: 30,
-            font: { size: 9 }
+            callback: (val, i) => `W${i+1}`,
+            font: { size: 11 }
           }
         },
         y: {
