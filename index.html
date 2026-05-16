@@ -986,43 +986,9 @@ document.querySelectorAll('.section').forEach(section => {
 // Animate footer
 onScrollVisible(document.querySelector('.footer'), el => el.classList.add('visible'));
 
-// ==================== DONUT CHART ====================
+// ==================== CATEGORY DATA ====================
 const cats = DATA.categories;
 const totalMentions = Object.values(cats).reduce((a,b) => a+b, 0);
-
-function createDonutChart() {
-  if (chartInstances.donut) return;
-  chartInstances.donut = new Chart(document.getElementById('donutChart'), {
-    type: 'doughnut',
-    data: {
-      labels: CATS_ORDER.map(c => CAT_LABELS[c]),
-      datasets: [{
-        data: CATS_ORDER.map(c => cats[c] || 0),
-        backgroundColor: CATS_ORDER.map(c => COLORS[c]),
-        borderColor: '#080808',
-        borderWidth: 2
-      }]
-    },
-    options: {
-      cutout: '62%',
-      animation: { animateRotate: true, duration: 1200 },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => {
-              const v = ctx.raw;
-              const pct = ((v / totalMentions) * 100).toFixed(1);
-              return `${ctx.label}: ${v} (${pct}%)`;
-            }
-          }
-        }
-      }
-    }
-  });
-}
-
-onScrollVisible(document.getElementById('donutChart'), createDonutChart);
 
 // Impact breakdown text
 document.getElementById('impactBreakdown').innerHTML = CATS_ORDER.map(c => {
