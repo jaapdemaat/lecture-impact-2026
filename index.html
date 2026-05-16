@@ -816,17 +816,14 @@ body {
       </div>
     </div>
     <div class="chart-box">
-      <h3>Average Impact Score by Category</h3>
-      <div class="chart-wrapper" style="height:260px">
-        <canvas id="avgScoreChart"></canvas>
-      </div>
-      <div class="callout" style="margin-top:16px">
-        <div class="desc">
-          Scores: <strong style="color:var(--transformative)">TRANSFORMATIVE=5</strong> |
-          <strong style="color:var(--integrative)">INTEGRATIVE=4</strong> |
-          <strong style="color:var(--resonant)">RESONANT=3</strong> |
-          <strong style="color:var(--critical)">CRITICAL=3</strong> |
-          <strong style="color:var(--mentioned)">MENTIONED=1</strong>
+      <h3>Scoring Key</h3>
+      <div class="callout" style="margin-top:0">
+        <div class="desc" style="font-size:12px;line-height:2">
+          <strong style="color:var(--transformative)">TRANSFORMATIVE = 5pts</strong><br>
+          <strong style="color:var(--integrative)">INTEGRATIVE = 4pts</strong><br>
+          <strong style="color:var(--resonant)">RESONANT = 3pts</strong><br>
+          <strong style="color:var(--critical)">CRITICAL = 3pts</strong><br>
+          <strong style="color:var(--mentioned)">MENTIONED = 1pt</strong>
         </div>
       </div>
     </div>
@@ -1261,38 +1258,6 @@ CATS_ORDER.forEach(c => {
   const items = DATA.mentions.filter(m => m.sentiment_category === c);
   catAvgs[c] = items.length > 0 ? items.reduce((a, m) => a + m.impact_score, 0) / items.length : 0;
 });
-
-function createAvgScoreChart() {
-  if (chartInstances.avgScore) return;
-  chartInstances.avgScore = new Chart(document.getElementById('avgScoreChart'), {
-    type: 'bar',
-    data: {
-      labels: CATS_ORDER.map(c => CAT_LABELS[c]),
-      datasets: [{
-        data: CATS_ORDER.map(c => catAvgs[c]),
-        backgroundColor: CATS_ORDER.map(c => COLORS[c]),
-        borderRadius: 3
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 1000, easing: 'easeOutQuart' },
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 5.5,
-          grid: { color: '#1a1a1a' },
-          title: { display: true, text: 'Score' }
-        },
-        x: { grid: { display: false } }
-      },
-      plugins: { legend: { display: false } }
-    }
-  });
-}
-
-onScrollVisible(document.getElementById('avgScoreChart'), createAvgScoreChart);
 
 // ==================== WEEK ACCORDION ====================
 const accordionEl = document.getElementById('weekAccordion');
