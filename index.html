@@ -744,6 +744,7 @@ body {
   <div class="section-title">02 — Student Engagement Heatmap <span>Who engaged with what?</span></div>
   <div class="d3-container">
     <h3>Which lectures each student referenced</h3>
+    <p style="font-size:11px;color:#888;margin:-8px 0 16px;line-height:1.5">Each row is an anonymised student, each column a lecture. Darker cells indicate higher engagement. Hover any cell for details.</p>
     <div id="heatmapDiagram" style="overflow-x:auto"></div>
   </div>
 </div>
@@ -837,6 +838,7 @@ body {
   <div class="section-title">07 — Connections <span>How lectures relate to different types of influence</span></div>
   <div class="d3-container">
     <h3>How each lecture connects to impact categories</h3>
+    <p style="font-size:11px;color:#888;margin:-8px 0 16px;line-height:1.5">The width of each ribbon shows how many mentions connect a lecture (grey arcs) to a category (coloured arcs). Hover to highlight individual connections.</p>
     <div id="chordDiagram" style="max-width:700px;margin:0 auto"></div>
   </div>
 </div>
@@ -845,7 +847,8 @@ body {
 <div class="section">
   <div class="section-title">08 — Impact Flow <span>How mentions travel from weeks through lectures into impact categories</span></div>
   <div class="d3-container">
-    <h3>Tracing each mention from when it happened, through which lecture, to how it was classified</h3>
+    <h3>Tracing each mention from week, through lecture, to category</h3>
+    <p style="font-size:11px;color:#888;margin:-8px 0 16px;line-height:1.5">Left column = the week the lecture took place. Middle = the lecture itself. Right = how students classified their engagement. Wider bands mean more mentions following that path. Hover for details.</p>
     <div id="sankeyDiagram"></div>
   </div>
 </div>
