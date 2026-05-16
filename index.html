@@ -770,23 +770,15 @@ body {
 <!-- SECTION 1: OVERVIEW -->
 <div class="section">
   <div class="section-title">04 — How Students Were Affected <span>Classifying the nature of lecture influence</span></div>
-  <div class="chart-grid">
-    <div class="chart-box">
-      <h3>How Were Students Affected?</h3>
-      <div class="chart-wrapper" style="max-width:340px;margin:0 auto">
-        <canvas id="donutChart"></canvas>
-      </div>
-    </div>
-    <div class="chart-box">
-      <h3>Breakdown by Category</h3>
-      <div id="impactBreakdown"></div>
-      <div class="callout">
-        <div class="big">2.61</div>
-        <div class="desc">
-          Average impact score across all 266 mentions.<br>
-          <strong>56.0%</strong> of mentions demonstrate measurable impact (beyond simple mention).<br>
-          <strong>17.3%</strong> of mentions were transformative — fundamentally changing student perspectives.
-        </div>
+  <div class="chart-box">
+    <h3>Breakdown by Category</h3>
+    <div id="impactBreakdown"></div>
+    <div class="callout">
+      <div class="big">2.61</div>
+      <div class="desc">
+        Average impact score across all 266 mentions.<br>
+        <strong>56.0%</strong> of mentions demonstrate measurable impact (beyond simple mention).<br>
+        <strong>17.3%</strong> of mentions were transformative — fundamentally changing student perspectives.
       </div>
     </div>
   </div>
@@ -1171,7 +1163,7 @@ document.getElementById('rankingBars').innerHTML = rankedLectures.map(([name, st
 
   return `<div class="ranking-bar">
     <span class="ranking-rank">${i + 1}</span>
-    <span class="ranking-name" title="${name}">${name}</span>
+    <span class="ranking-name" title="${name}">W${stats.week} ${name}</span>
     <div class="ranking-bar-container">${segments}</div>
     <span class="ranking-score">${stats.total_score}pts</span>
     <span class="ranking-avg" style="color:${avgColor}">${stats.avg_impact.toFixed(1)}</span>
@@ -1732,7 +1724,7 @@ function renderHeatmap() {
       .attr('dy', '0.35em')
       .attr('text-anchor', 'end')
       .attr('font-size', '11px')
-      .text(lec.length > 28 ? lec.slice(0, 26) + '…' : lec);
+      .text(() => { const w = lectureStats[lec] ? 'W' + lectureStats[lec].week + ' ' : ''; const label = w + lec; return label.length > 30 ? label.slice(0, 28) + '…' : label; });
   });
 
   studentIds.forEach((sid, ci) => {
