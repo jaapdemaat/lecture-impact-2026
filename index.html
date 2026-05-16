@@ -21,7 +21,7 @@
   --integrative: #1C5A9C;
   --resonant: #1B9C00;
   --critical: #9C6300;
-  --referenced: #808080;
+  --mentioned: #808080;
   --accent: #9C0075;
 }
 
@@ -710,7 +710,7 @@ body {
   <div class="stats-row">
     <div class="stat-card">
       <div class="value" id="stat-students">124</div>
-      <div class="label">Students Referenced</div>
+      <div class="label">Students Analysed</div>
     </div>
     <div class="stat-card">
       <div class="value" id="stat-mentions">266</div>
@@ -743,7 +743,7 @@ body {
 <div class="section">
   <div class="section-title">02 — Student Engagement Heatmap <span>Who engaged with what?</span></div>
   <div class="d3-container">
-    <h3>Which lectures each student referenced</h3>
+    <h3>Which lectures each student mentioned</h3>
     <p style="font-size:11px;color:#888;margin:-8px 0 16px;line-height:1.5">Each row is a lecture, each column an anonymised student. Darker cells indicate higher engagement. Hover for details.</p>
     <div id="heatmapDiagram" style="overflow-x:auto"></div>
   </div>
@@ -784,7 +784,7 @@ body {
         <div class="big">2.61</div>
         <div class="desc">
           Average impact score across all 266 mentions.<br>
-          <strong>56.0%</strong> of mentions demonstrate measurable impact (non-neutral).<br>
+          <strong>56.0%</strong> of mentions demonstrate measurable impact (beyond simple mention).<br>
           <strong>17.3%</strong> of mentions were transformative — fundamentally changing student perspectives.
         </div>
       </div>
@@ -826,7 +826,7 @@ body {
           <strong style="color:var(--integrative)">INTEGRATIVE=4</strong> |
           <strong style="color:var(--resonant)">RESONANT=3</strong> |
           <strong style="color:var(--critical)">CRITICAL=3</strong> |
-          <strong style="color:var(--referenced)">REFERENCED=1</strong>
+          <strong style="color:var(--mentioned)">MENTIONED=1</strong>
         </div>
       </div>
     </div>
@@ -885,7 +885,7 @@ body {
     <span class="def-label" style="background:var(--integrative)"></span> <strong>INTEGRATIVE (4pts):</strong> Actionable insight gained — "helped me understand", "applies to practice"<br>
     <span class="def-label" style="background:var(--resonant)"></span> <strong>RESONANT (3pts):</strong> Personal relevance, affirmed thinking — "resonated", "inspiring", "compelling"<br>
     <span class="def-label" style="background:var(--critical)"></span> <strong>CRITICAL (3pts):</strong> Productive challenge, critical reflection — "questioned", "forced me to think"<br>
-    <span class="def-label" style="background:var(--referenced)"></span> <strong>REFERENCED (1pt):</strong> Cited without elaborating on impact — "watched", "attended", "discussed"
+    <span class="def-label" style="background:var(--mentioned)"></span> <strong>MENTIONED (1pt):</strong> Cited without elaborating on impact — "watched", "attended", "discussed"
   </div>
 </div>
 
@@ -915,7 +915,7 @@ const CAT_LABELS = {
   INTEGRATIVE: 'Integrative',
   RESONANT: 'Resonant',
   CRITICAL: 'Critical',
-  REFERENCED: 'Referenced'
+  REFERENCED: 'Mentioned'
 };
 
 const WEEK_TITLES = {
@@ -1450,8 +1450,8 @@ document.getElementById('recommendations').innerHTML = `
   </div>
 
   <div class="rec-card">
-    <h4><span class="rec-icon" style="background:var(--referenced)"></span>Deepen Low-Impact Lectures</h4>
-    <p>These lectures were frequently referenced but scored low on articulated impact — students mentioned them without demonstrating changed understanding. Consider reframing the brief connection, adding interactive elements, or pairing with reflective exercises.</p>
+    <h4><span class="rec-icon" style="background:var(--mentioned)"></span>Deepen Low-Impact Lectures</h4>
+    <p>These lectures were frequently mentioned but scored low on articulated impact — students named them without demonstrating changed understanding. Consider reframing the brief connection, adding interactive elements, or pairing with reflective exercises.</p>
     <div class="rec-lectures">
       ${lowImpactLecs.map(([n, s]) => `<span>${n} (${s.avg_impact.toFixed(1)})</span>`).join('')}
     </div>
@@ -1786,7 +1786,7 @@ function renderHeatmap() {
           tooltip.style.display = 'block';
           tooltip.innerHTML = score > 0
             ? `<strong>${sid}</strong><br>${lec}<br>Engagement: <strong>${score}</strong>/5`
-            : `<strong>${sid}</strong><br>${lec}<br><em>Not referenced</em>`;
+            : `<strong>${sid}</strong><br>${lec}<br><em>Not mentioned</em>`;
         })
         .on('mousemove', (event) => {
           tooltip.style.left = event.clientX + 12 + 'px';
