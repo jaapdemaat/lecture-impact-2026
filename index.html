@@ -1741,8 +1741,8 @@ function renderHeatmap() {
     .map(([n]) => n);
   const studentIds = Object.keys(studentLectures).sort();
 
-  const cellW = 8;
-  const cellH = 36;
+  const cellW = 9;
+  const cellH = 34;
   const labelWidth = 200;
   const topLabelHeight = 30;
   const width = labelWidth + studentIds.length * cellW + 60;
@@ -1754,12 +1754,8 @@ function renderHeatmap() {
 
   const g = svg.append('g').attr('transform', `translate(${labelWidth},${topLabelHeight})`);
 
-  const colorScale = d3.scaleSequential()
-    .domain([0, 5])
-    .interpolator(t => {
-      if (t === 0) return '#1a1a1a';
-      return d3.interpolateRgb('#2a1a30', '#9C0075')(t / 5);
-    });
+  const heatColors = ['#151515', '#3d1745', '#7a1a6a', '#c4208a', '#e84fbf', '#ff8cdd'];
+  const colorScale = v => heatColors[v] || heatColors[0];
 
   const tooltip = document.getElementById('heatmapTooltip');
 
