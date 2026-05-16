@@ -741,11 +741,11 @@ body {
 
 <!-- SECTION 7: STUDENT HEATMAP -->
 <div class="section">
-  <div class="section-title">02 — Lecture Co-occurrence <span>Which lectures do students tend to reference together?</span></div>
+  <div class="section-title">02 — Student Engagement Heatmap <span>Who engaged with what?</span></div>
   <div class="d3-container">
-    <h3>Lecture co-mention matrix</h3>
-    <p style="font-size:11px;color:#888;margin:-8px 0 16px;line-height:1.5">Each cell shows how many students referenced both lectures. Darker cells reveal which lectures are frequently discussed together. Hover for details.</p>
-    <div id="heatmapDiagram"></div>
+    <h3>Which lectures each student referenced</h3>
+    <p style="font-size:11px;color:#888;margin:-8px 0 16px;line-height:1.5">Each row is a lecture, each column an anonymised student. Darker cells indicate higher engagement. Hover for details.</p>
+    <div id="heatmapDiagram" style="overflow-x:auto"></div>
   </div>
 </div>
 
@@ -1726,110 +1726,91 @@ function renderHeatmap() {
 
   const studentLectures = {};
   DATA.mentions.forEach(m => {
-    if (!studentLectures[m.student_id]) studentLectures[m.student_id] = new Set();
-    studentLectures[m.student_id].add(m.lecture_title);
+    if (!studentLectures[m.student_id]) studentLectures[m.student_id] = {};
+    if (!studentLectures[m.student_id][m.lecture_title]) {
+      studentLectures[m.student_id][m.lecture_title] = 0;
+    }
+    studentLectures[m.student_id][m.lecture_title] = Math.max(
+      studentLectures[m.student_id][m.lecture_title], m.impact_score
+    );
   });
 
   const lectureNames = sortedLectures.slice(0, 12).map(([n]) => n);
-  const n = lectureNames.length;
-  const coMatrix = Array.from({length: n}, () => Array(n).fill(0));
+  const studentIds = Object.keys(studentLectures).sort();
 
-  Object.values(studentLectures).forEach(lecSet => {
-    const indices = lectureNames.map((l, i) => lecSet.has(l) ? i : -1).filter(i => i >= 0);
-    for (let a = 0; a < indices.length; a++) {
-      coMatrix[indices[a]][indices[a]]++;
-      for (let b = a + 1; b < indices.length; b++) {
-        coMatrix[indices[a]][indices[b]]++;
-        coMatrix[indices[b]][indices[a]]++;
-      }
-    }
-  });
-
-  const maxOff = Math.max(...coMatrix.flat().filter((v, i) => Math.floor(i / n) !== i % n));
-  const cellSize = 48;
-  const labelWidth = 160;
-  const topLabelHeight = 160;
-  const width = labelWidth + n * cellSize + 20;
-  const height = topLabelHeight + n * cellSize + 20;
+  const cellW = 8;
+  const cellH = 36;
+  const labelWidth = 200;
+  const topLabelHeight = 30;
+  const width = labelWidth + studentIds.length * cellW + 60;
+  const height = topLabelHeight + lectureNames.length * cellH + 20;
 
   const svg = d3.select(container).append('svg')
-    .attr('viewBox', `0 0 ${width} ${height}`);
+    .attr('viewBox', `0 0 ${width} ${height}`)
+    .attr('style', `min-width:${width}px`);
 
   const g = svg.append('g').attr('transform', `translate(${labelWidth},${topLabelHeight})`);
 
   const colorScale = d3.scaleSequential()
-    .domain([0, maxOff])
+    .domain([0, 5])
     .interpolator(t => {
       if (t === 0) return '#1a1a1a';
-      return d3.interpolateRgb('#2a1a30', '#9C0075')(t);
+      return d3.interpolateRgb('#2a1a30', '#9C0075')(t / 5);
     });
-
-  const diagScale = d3.scaleSequential()
-    .domain([0, Math.max(...coMatrix.map((r, i) => r[i]))])
-    .interpolator(t => d3.interpolateRgb('#1a2a1a', '#1B9C00')(t));
 
   const tooltip = document.getElementById('heatmapTooltip');
 
-  lectureNames.forEach((lec, ci) => {
-    svg.append('text')
-      .attr('class', 'heatmap-col-label')
-      .attr('x', 0).attr('y', 0)
-      .attr('transform', `translate(${labelWidth + ci * cellSize + cellSize/2}, ${topLabelHeight - 8}) rotate(-50)`)
-      .attr('text-anchor', 'end')
-      .attr('font-size', '10px')
-      .text(lec.length > 22 ? lec.slice(0, 20) + '…' : lec);
-
+  lectureNames.forEach((lec, ri) => {
     svg.append('text')
       .attr('class', 'heatmap-row-label')
       .attr('x', labelWidth - 8)
-      .attr('y', topLabelHeight + ci * cellSize + cellSize / 2)
+      .attr('y', topLabelHeight + ri * cellH + cellH / 2)
       .attr('dy', '0.35em')
       .attr('text-anchor', 'end')
-      .attr('font-size', '10px')
-      .text(lec.length > 22 ? lec.slice(0, 20) + '…' : lec);
+      .attr('font-size', '11px')
+      .text(lec.length > 28 ? lec.slice(0, 26) + '…' : lec);
   });
 
-  for (let ri = 0; ri < n; ri++) {
-    for (let ci = 0; ci < n; ci++) {
-      const val = coMatrix[ri][ci];
-      const isDiag = ri === ci;
+  studentIds.forEach((sid, ci) => {
+    lectureNames.forEach((lec, ri) => {
+      const score = (studentLectures[sid] && studentLectures[sid][lec]) || 0;
       g.append('rect')
-        .attr('x', ci * cellSize + 1)
-        .attr('y', ri * cellSize + 1)
-        .attr('width', cellSize - 2)
-        .attr('height', cellSize - 2)
-        .attr('rx', 3)
-        .attr('fill', isDiag ? diagScale(val) : colorScale(val))
-        .attr('stroke', val > 0 ? '#333' : 'none')
-        .attr('stroke-width', 0.5)
+        .attr('x', ci * cellW)
+        .attr('y', ri * cellH + 1)
+        .attr('width', cellW - 1)
+        .attr('height', cellH - 2)
+        .attr('rx', 1)
+        .attr('fill', colorScale(score))
+        .attr('stroke', score > 0 ? '#333' : 'none')
+        .attr('stroke-width', 0.3)
         .on('mouseover', (event) => {
           tooltip.style.display = 'block';
-          if (isDiag) {
-            tooltip.innerHTML = `<strong>${lectureNames[ri]}</strong><br>Referenced by <strong>${val}</strong> students`;
-          } else {
-            tooltip.innerHTML = `<strong>${lectureNames[ri]}</strong> & <strong>${lectureNames[ci]}</strong><br>Co-mentioned by <strong>${val}</strong> students`;
-          }
+          tooltip.innerHTML = score > 0
+            ? `<strong>${sid}</strong><br>${lec}<br>Engagement: <strong>${score}</strong>/5`
+            : `<strong>${sid}</strong><br>${lec}<br><em>Not referenced</em>`;
         })
         .on('mousemove', (event) => {
           tooltip.style.left = event.clientX + 12 + 'px';
           tooltip.style.top = event.clientY - 10 + 'px';
         })
         .on('mouseout', () => { tooltip.style.display = 'none'; });
+    });
+  });
 
-      if (val > 0) {
-        g.append('text')
-          .attr('x', ci * cellSize + cellSize / 2)
-          .attr('y', ri * cellSize + cellSize / 2)
-          .attr('dy', '0.35em')
-          .attr('text-anchor', 'middle')
-          .attr('fill', val > maxOff * 0.5 || (isDiag && val > 15) ? '#fff' : '#888')
-          .attr('font-size', '11px')
-          .attr('font-family', "'Roboto', sans-serif")
-          .attr('pointer-events', 'none')
-          .text(val);
-      }
-    }
-  }
+  const legendX = labelWidth + studentIds.length * cellW + 12;
+  const legendG = svg.append('g').attr('transform', `translate(${legendX},${topLabelHeight})`);
+  [0, 1, 2, 3, 4, 5].forEach((v, i) => {
+    legendG.append('rect')
+      .attr('x', 0).attr('y', i * 18)
+      .attr('width', 14).attr('height', 14)
+      .attr('rx', 2)
+      .attr('fill', colorScale(v));
+    legendG.append('text')
+      .attr('x', 19).attr('y', i * 18 + 10)
+      .attr('fill', '#888').attr('font-size', '10px')
+      .attr('font-family', "'Roboto', sans-serif")
+      .text(v === 0 ? 'None' : v);
+  });
 }
 
 onScrollVisible(document.getElementById('heatmapDiagram').closest('.section'), () => {
