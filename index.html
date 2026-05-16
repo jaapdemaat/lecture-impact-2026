@@ -6,7 +6,7 @@
 <title>Stage 2 Lecture Impact Analysis — Weeks 1–11</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
 :root {
   --bg: #080808;
@@ -28,7 +28,7 @@
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: 'Roboto', sans-serif;
   font-size: 13px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -574,6 +574,73 @@ body {
   display: none;
 }
 
+/* Scroll-triggered animations */
+.section, .header, .footer {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.section.visible, .header.visible, .footer.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stat-card {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+.stat-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ranking-bar {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.ranking-bar.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.accordion-item {
+  opacity: 0;
+  transform: translateY(15px);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.accordion-item.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.lecture-card {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+.lecture-card.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.rec-card {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+.rec-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 @media (max-width: 768px) {
   .stats-row { grid-template-columns: repeat(2, 1fr); }
   .chart-grid { grid-template-columns: 1fr; }
@@ -791,7 +858,7 @@ const WEEK_DATES = {
 
 // Chart.js defaults
 Chart.defaults.color = '#888';
-Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.family = "'Roboto', sans-serif";
 Chart.defaults.font.size = 11;
 
 // ==================== LEGEND ====================
@@ -804,37 +871,88 @@ function renderLegend(containerId) {
 renderLegend('mainLegend');
 renderLegend('rankingLegend');
 
+// ==================== SCROLL OBSERVER ====================
+const chartInstances = {};
+
+function onScrollVisible(element, callback, options = {}) {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        callback(entry.target);
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: options.threshold || 0.15 });
+  obs.observe(element);
+}
+
+function staggerChildren(parent, selector, baseDelay = 80) {
+  const children = parent.querySelectorAll(selector);
+  children.forEach((child, i) => {
+    child.style.transitionDelay = `${i * baseDelay}ms`;
+    child.classList.add('visible');
+  });
+}
+
+// Animate header immediately
+document.querySelector('.header').classList.add('visible');
+setTimeout(() => {
+  document.querySelectorAll('.stat-card').forEach((card, i) => {
+    setTimeout(() => card.classList.add('visible'), i * 120);
+  });
+}, 300);
+
+// Animate sections on scroll
+document.querySelectorAll('.section').forEach(section => {
+  onScrollVisible(section, (el) => {
+    el.classList.add('visible');
+    staggerChildren(el, '.ranking-bar', 60);
+    staggerChildren(el, '.accordion-item', 50);
+    staggerChildren(el, '.lecture-card', 80);
+    staggerChildren(el, '.rec-card', 100);
+  });
+});
+
+// Animate footer
+onScrollVisible(document.querySelector('.footer'), el => el.classList.add('visible'));
+
 // ==================== DONUT CHART ====================
 const cats = DATA.categories;
 const totalMentions = Object.values(cats).reduce((a,b) => a+b, 0);
 
-new Chart(document.getElementById('donutChart'), {
-  type: 'doughnut',
-  data: {
-    labels: CATS_ORDER.map(c => CAT_LABELS[c]),
-    datasets: [{
-      data: CATS_ORDER.map(c => cats[c] || 0),
-      backgroundColor: CATS_ORDER.map(c => COLORS[c]),
-      borderColor: '#080808',
-      borderWidth: 2
-    }]
-  },
-  options: {
-    cutout: '62%',
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: ctx => {
-            const v = ctx.raw;
-            const pct = ((v / totalMentions) * 100).toFixed(1);
-            return `${ctx.label}: ${v} (${pct}%)`;
+function createDonutChart() {
+  if (chartInstances.donut) return;
+  chartInstances.donut = new Chart(document.getElementById('donutChart'), {
+    type: 'doughnut',
+    data: {
+      labels: CATS_ORDER.map(c => CAT_LABELS[c]),
+      datasets: [{
+        data: CATS_ORDER.map(c => cats[c] || 0),
+        backgroundColor: CATS_ORDER.map(c => COLORS[c]),
+        borderColor: '#080808',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      cutout: '62%',
+      animation: { animateRotate: true, duration: 1200 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = ctx.raw;
+              const pct = ((v / totalMentions) * 100).toFixed(1);
+              return `${ctx.label}: ${v} (${pct}%)`;
+            }
           }
         }
       }
     }
-  }
-});
+  });
+}
+
+onScrollVisible(document.getElementById('donutChart'), createDonutChart);
 
 // Impact breakdown text
 document.getElementById('impactBreakdown').innerHTML = CATS_ORDER.map(c => {
@@ -864,47 +982,60 @@ for (let w = 1; w <= 11; w++) {
   });
 }
 
-new Chart(document.getElementById('weeklyChart'), {
-  type: 'bar',
-  data: {
-    labels: weekLabels,
-    datasets: CATS_ORDER.map(c => ({
-      label: CAT_LABELS[c],
-      data: weekDatasets[c],
-      backgroundColor: COLORS[c],
-      borderRadius: 2
-    }))
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        stacked: true,
-        grid: { display: false },
-        ticks: {
-          callback: (val, i) => `W${i+1}\n${WEEK_DATES[i+1]}`
+function createWeeklyChart() {
+  if (chartInstances.weekly) return;
+  chartInstances.weekly = new Chart(document.getElementById('weeklyChart'), {
+    type: 'bar',
+    data: {
+      labels: weekLabels,
+      datasets: CATS_ORDER.map(c => ({
+        label: CAT_LABELS[c],
+        data: weekDatasets[c],
+        backgroundColor: COLORS[c],
+        borderRadius: 2
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 1000, easing: 'easeOutQuart' },
+      scales: {
+        x: {
+          stacked: true,
+          grid: { display: false },
+          ticks: {
+            callback: function(val, i) {
+              const title = WEEK_TITLES[i+1] || '';
+              const short = title.length > 25 ? title.slice(0, 23) + '…' : title;
+              return [`W${i+1}`, short];
+            },
+            maxRotation: 45,
+            minRotation: 30,
+            font: { size: 9 }
+          }
+        },
+        y: {
+          stacked: true,
+          grid: { color: '#1a1a1a' },
+          title: { display: true, text: 'Mentions' }
         }
       },
-      y: {
-        stacked: true,
-        grid: { color: '#1a1a1a' },
-        title: { display: true, text: 'Mentions' }
-      }
-    },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          title: ctx => {
-            const w = ctx[0].dataIndex + 1;
-            return `Week ${w}: ${WEEK_TITLES[w]}`;
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: ctx => {
+              const w = ctx[0].dataIndex + 1;
+              return `Week ${w}: ${WEEK_TITLES[w]}`;
+            }
           }
         }
       }
     }
-  }
-});
+  });
+}
+
+onScrollVisible(document.getElementById('weeklyChart'), createWeeklyChart);
 
 // ==================== RANKING BARS ====================
 const lectureStats = DATA.lecture_stats;
@@ -938,62 +1069,74 @@ const top8 = Object.entries(lectureStats)
   .sort((a, b) => b[1].total_score - a[1].total_score)
   .slice(0, 8);
 
-new Chart(document.getElementById('stackedChart'), {
-  type: 'bar',
-  data: {
-    labels: top8.map(([name]) => name.length > 30 ? name.slice(0, 28) + '…' : name),
-    datasets: CATS_ORDER.map(c => ({
-      label: CAT_LABELS[c],
-      data: top8.map(([, s]) => s.cats[c] || 0),
-      backgroundColor: COLORS[c],
-      borderRadius: 1
-    }))
-  },
-  options: {
-    indexAxis: 'y',
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        stacked: true,
-        grid: { color: '#1a1a1a' },
-        title: { display: true, text: 'Mentions by Category' }
-      },
-      y: {
-        stacked: true,
-        grid: { display: false }
-      }
+function createStackedChart() {
+  if (chartInstances.stacked) return;
+  chartInstances.stacked = new Chart(document.getElementById('stackedChart'), {
+    type: 'bar',
+    data: {
+      labels: top8.map(([name]) => name.length > 30 ? name.slice(0, 28) + '…' : name),
+      datasets: CATS_ORDER.map(c => ({
+        label: CAT_LABELS[c],
+        data: top8.map(([, s]) => s.cats[c] || 0),
+        backgroundColor: COLORS[c],
+        borderRadius: 1
+      }))
     },
-    plugins: {
-      legend: {
-        position: 'top',
-        labels: { boxWidth: 12, padding: 16, font: { size: 10 } }
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 1000, easing: 'easeOutQuart' },
+      scales: {
+        x: {
+          stacked: true,
+          grid: { color: '#1a1a1a' },
+          title: { display: true, text: 'Mentions by Category' }
+        },
+        y: {
+          stacked: true,
+          grid: { display: false }
+        }
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: { boxWidth: 12, padding: 16, font: { size: 10 } }
+        }
       }
     }
-  }
-});
+  });
+}
+
+onScrollVisible(document.getElementById('stackedChart'), createStackedChart);
 
 // ==================== PIE CHART ====================
-new Chart(document.getElementById('pieChart'), {
-  type: 'pie',
-  data: {
-    labels: CATS_ORDER.map(c => `${CAT_LABELS[c]} (${((cats[c]||0)/totalMentions*100).toFixed(0)}%)`),
-    datasets: [{
-      data: CATS_ORDER.map(c => cats[c] || 0),
-      backgroundColor: CATS_ORDER.map(c => COLORS[c]),
-      borderColor: '#080808',
-      borderWidth: 2
-    }]
-  },
-  options: {
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: { boxWidth: 10, padding: 12, font: { size: 10 } }
+function createPieChart() {
+  if (chartInstances.pie) return;
+  chartInstances.pie = new Chart(document.getElementById('pieChart'), {
+    type: 'pie',
+    data: {
+      labels: CATS_ORDER.map(c => `${CAT_LABELS[c]} (${((cats[c]||0)/totalMentions*100).toFixed(0)}%)`),
+      datasets: [{
+        data: CATS_ORDER.map(c => cats[c] || 0),
+        backgroundColor: CATS_ORDER.map(c => COLORS[c]),
+        borderColor: '#080808',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      animation: { animateRotate: true, duration: 1200 },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { boxWidth: 10, padding: 12, font: { size: 10 } }
+        }
       }
     }
-  }
-});
+  });
+}
+
+onScrollVisible(document.getElementById('pieChart'), createPieChart);
 
 // Avg score by category chart
 const catAvgs = {};
@@ -1002,31 +1145,37 @@ CATS_ORDER.forEach(c => {
   catAvgs[c] = items.length > 0 ? items.reduce((a, m) => a + m.impact_score, 0) / items.length : 0;
 });
 
-new Chart(document.getElementById('avgScoreChart'), {
-  type: 'bar',
-  data: {
-    labels: CATS_ORDER.map(c => CAT_LABELS[c]),
-    datasets: [{
-      data: CATS_ORDER.map(c => catAvgs[c]),
-      backgroundColor: CATS_ORDER.map(c => COLORS[c]),
-      borderRadius: 3
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      y: {
-        beginAtZero: true,
-        max: 5.5,
-        grid: { color: '#1a1a1a' },
-        title: { display: true, text: 'Score' }
-      },
-      x: { grid: { display: false } }
+function createAvgScoreChart() {
+  if (chartInstances.avgScore) return;
+  chartInstances.avgScore = new Chart(document.getElementById('avgScoreChart'), {
+    type: 'bar',
+    data: {
+      labels: CATS_ORDER.map(c => CAT_LABELS[c]),
+      datasets: [{
+        data: CATS_ORDER.map(c => catAvgs[c]),
+        backgroundColor: CATS_ORDER.map(c => COLORS[c]),
+        borderRadius: 3
+      }]
     },
-    plugins: { legend: { display: false } }
-  }
-});
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 1000, easing: 'easeOutQuart' },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 5.5,
+          grid: { color: '#1a1a1a' },
+          title: { display: true, text: 'Score' }
+        },
+        x: { grid: { display: false } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+onScrollVisible(document.getElementById('avgScoreChart'), createAvgScoreChart);
 
 // ==================== WEEK ACCORDION ====================
 const accordionEl = document.getElementById('weekAccordion');
