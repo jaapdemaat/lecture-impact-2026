@@ -1256,11 +1256,22 @@ for (let w = 1; w <= 11; w++) {
     byLecture[m.lecture_title].push(m);
   });
 
-  // Get top insights (non-neutral)
-  const topInsights = weekMentions
-    .filter(m => m.sentiment_category !== 'REFERENCED' && m.context_snippet.length > 60)
-    .sort((a, b) => b.impact_score - a.impact_score)
-    .slice(0, 4);
+  // Get top insights — one per category for diversity, then fill remaining slots
+  const eligible = weekMentions
+    .filter(m => m.sentiment_category !== 'REFERENCED' && m.context_snippet && m.context_snippet.length > 60)
+    .sort((a, b) => b.impact_score - a.impact_score);
+  const topInsights = [];
+  const seenCats = new Set();
+  for (const m of eligible) {
+    if (!seenCats.has(m.sentiment_category)) { topInsights.push(m); seenCats.add(m.sentiment_category); }
+    if (topInsights.length >= 4) break;
+  }
+  if (topInsights.length < 4) {
+    for (const m of eligible) {
+      if (!topInsights.includes(m)) topInsights.push(m);
+      if (topInsights.length >= 4) break;
+    }
+  }
 
   const catBadges = CATS_ORDER.map(c => {
     const count = wd.cats[c] || 0;
