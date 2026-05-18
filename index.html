@@ -1146,7 +1146,7 @@ function createStackedChart() {
   chartInstances.stacked = new Chart(document.getElementById('stackedChart'), {
     type: 'bar',
     data: {
-      labels: top8.map(([name]) => name.length > 30 ? name.slice(0, 28) + '…' : name),
+      labels: top8.map(([name, s]) => { const w = s.week ? 'W' + s.week + ' ' : ''; const label = w + name; return label.length > 35 ? label.slice(0, 33) + '…' : label; }),
       datasets: CATS_ORDER.map(c => ({
         label: CAT_LABELS[c],
         data: top8.map(([, s]) => s.cats[c] || 0),
