@@ -848,11 +848,6 @@ body {
   <div id="weekAccordion"></div>
 </div>
 
-<!-- SECTION 10: LECTURE CARDS -->
-<div class="section">
-  <div class="section-title">10 — Lecture Cards <span>Click any lecture for quotes and detailed breakdown</span></div>
-  <div class="lecture-cards-grid" id="lectureCards"></div>
-</div>
 
 <!-- SECTION 11: RECOMMENDATIONS -->
 <div class="section">
@@ -1295,66 +1290,8 @@ function toggleAccordion(header) {
   header.parentElement.classList.toggle('open');
 }
 
-// ==================== LECTURE CARDS ====================
-const cardsEl = document.getElementById('lectureCards');
 const sortedLectures = Object.entries(lectureStats)
   .sort((a, b) => b[1].total_score - a[1].total_score);
-
-cardsEl.innerHTML = sortedLectures.map(([name, stats]) => {
-  const avgColor = stats.avg_impact >= 3 ? COLORS.TRANSFORMATIVE :
-    stats.avg_impact >= 2.5 ? COLORS.INTEGRATIVE : COLORS.REFERENCED;
-
-  const catPills = CATS_ORDER.map(c => {
-    const count = stats.cats[c] || 0;
-    if (count === 0) return '';
-    return `<span class="card-cat-pill" style="background:${COLORS[c]}22;color:${COLORS[c]};border:1px solid ${COLORS[c]}44">${CAT_LABELS[c]}: ${count}</span>`;
-  }).join('');
-
-  // Get quotes per category
-  const lecMentions = DATA.mentions.filter(m => m.lecture_title === name);
-  let quotesHTML = '';
-  const shownCats = CATS_ORDER.filter(c => c !== 'REFERENCED');
-  shownCats.forEach(c => {
-    const items = lecMentions.filter(m => m.sentiment_category === c && m.context_snippet.length > 60);
-    if (items.length > 0) {
-      const best = items.sort((a, b) => b.context_snippet.length - a.context_snippet.length)[0];
-      quotesHTML += `<div class="card-quote" style="border-left-color:${COLORS[c]}">
-        <span class="cat-label" style="color:${COLORS[c]}">${CAT_LABELS[c]}</span>
-        "${best.context_snippet.slice(0, 500)}${best.context_snippet.length > 500 ? '…' : ''}"
-      </div>`;
-    }
-  });
-
-  // Impact signals
-  const allSignals = new Set();
-  lecMentions.forEach(m => {
-    (m.impact_signal || []).forEach(s => {
-      if (s !== 'referenced' && s.length > 3) allSignals.add(s);
-    });
-  });
-  const signalPills = [...allSignals].slice(0, 8).map(s =>
-    `<span class="signal-pill">${s}</span>`
-  ).join('');
-
-  return `<div class="lecture-card" onclick="this.classList.toggle('open')">
-    <div class="lecture-card-header">
-      <h4>${name}</h4>
-      <div class="meta">
-        <span>Week ${stats.week}</span>
-        <span>${stats.mentions} mentions</span>
-        <span style="color:${avgColor}">avg ${stats.avg_impact.toFixed(1)}</span>
-      </div>
-    </div>
-    <div class="lecture-card-body">
-      <div class="card-score-row">
-        <div class="card-big-score" style="color:${avgColor}">${stats.total_score}<span style="font-size:12px;color:var(--text-dim)"> total pts</span></div>
-        <div class="card-cats">${catPills}</div>
-      </div>
-      ${quotesHTML ? '<div class="card-quotes"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:8px">Impact Quotes</div>' + quotesHTML + '</div>' : ''}
-      ${signalPills ? '<div class="card-signals"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:6px;width:100%">Impact Signals</div>' + signalPills + '</div>' : ''}
-    </div>
-  </div>`;
-}).join('');
 
 // ==================== RECOMMENDATIONS ====================
 // Data-driven recommendations
