@@ -749,7 +749,6 @@ body {
   </div>
 </div>
 
-<div class="chord-tooltip" id="chordTooltip"></div>
 <div class="sankey-tooltip" id="sankeyTooltip"></div>
 <div class="heatmap-tooltip" id="heatmapTooltip"></div>
 
@@ -822,17 +821,7 @@ body {
   </div>
 </div>
 
-<!-- SECTION 5: CHORD DIAGRAM -->
-<div class="section">
-  <div class="section-title">07 — Connections <span>How lectures relate to different types of influence</span></div>
-  <div class="d3-container">
-    <h3>How each lecture connects to impact categories</h3>
-    <p style="font-size:11px;color:#888;margin:-8px 0 16px;line-height:1.5">The width of each ribbon shows how many mentions connect a lecture (grey arcs) to a category (coloured arcs). Hover to highlight individual connections.</p>
-    <div id="chordDiagram" style="max-width:700px;margin:0 auto"></div>
-  </div>
-</div>
-
-<!-- SECTION 6: SANKEY FLOW -->
+<!-- SECTION 5: SANKEY FLOW -->
 <div class="section">
   <div class="section-title">08 — Impact Flow <span>How mentions travel from weeks through lectures into impact categories</span></div>
   <div class="d3-container">
@@ -1343,119 +1332,6 @@ document.getElementById('recommendations').innerHTML = `
     </div>
   </div>
 `;
-
-// ==================== CHORD DIAGRAM (D3) ====================
-function renderChordDiagram() {
-  const container = document.getElementById('chordDiagram');
-  if (container.querySelector('svg')) return;
-  const width = Math.min(container.clientWidth, 700);
-  const height = width;
-  const outerRadius = width / 2 - 80;
-  const innerRadius = outerRadius - 20;
-
-  const topLectures = sortedLectures.slice(0, 8);
-  const groups = [...topLectures.map(([n]) => n), ...CATS_ORDER];
-  const n = groups.length;
-  const matrix = Array.from({length: n}, () => Array(n).fill(0));
-
-  topLectures.forEach(([name, stats], li) => {
-    CATS_ORDER.forEach((cat, ci) => {
-      const val = stats.cats[cat] || 0;
-      const catIdx = topLectures.length + ci;
-      matrix[li][catIdx] = val;
-      matrix[catIdx][li] = val;
-    });
-  });
-
-  const svg = d3.select(container).append('svg')
-    .attr('viewBox', `0 0 ${width} ${height}`)
-    .append('g')
-    .attr('transform', `translate(${width/2},${height/2})`);
-
-  const chord = d3.chord().padAngle(0.04).sortSubgroups(d3.descending);
-  const chords = chord(matrix);
-
-  const arc = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius);
-  const ribbon = d3.ribbon().radius(innerRadius);
-
-  const colorFn = (i) => {
-    if (i < topLectures.length) return '#555';
-    return COLORS[CATS_ORDER[i - topLectures.length]];
-  };
-
-  const tooltip = document.getElementById('chordTooltip');
-
-  const group = svg.append('g')
-    .selectAll('g')
-    .data(chords.groups)
-    .join('g');
-
-  group.append('path')
-    .attr('d', arc)
-    .attr('fill', d => colorFn(d.index))
-    .attr('stroke', '#080808')
-    .attr('stroke-width', 1)
-    .on('mouseover', function(event, d) {
-      tooltip.style.display = 'block';
-      tooltip.innerHTML = `<strong>${groups[d.index]}</strong><br>Total connections: ${d.value}`;
-      svg.selectAll('.chord-ribbon').attr('opacity', r =>
-        r.source.index === d.index || r.target.index === d.index ? 0.85 : 0.05
-      );
-    })
-    .on('mousemove', (event) => {
-      tooltip.style.left = event.clientX + 12 + 'px';
-      tooltip.style.top = event.clientY - 10 + 'px';
-    })
-    .on('mouseout', () => {
-      tooltip.style.display = 'none';
-      svg.selectAll('.chord-ribbon').attr('opacity', 0.65);
-    });
-
-  group.append('text')
-    .each(d => { d.angle = (d.startAngle + d.endAngle) / 2; })
-    .attr('dy', '0.35em')
-    .attr('transform', d => `
-      rotate(${(d.angle * 180 / Math.PI - 90)})
-      translate(${outerRadius + 8})
-      ${d.angle > Math.PI ? 'rotate(180)' : ''}
-    `)
-    .attr('text-anchor', d => d.angle > Math.PI ? 'end' : 'start')
-    .attr('fill', '#999')
-    .attr('font-size', '10px')
-    .attr('font-family', "'Roboto', sans-serif")
-    .text(d => {
-      const label = groups[d.index];
-      return label.length > 22 ? label.slice(0, 20) + '…' : label;
-    });
-
-  svg.append('g')
-    .selectAll('path')
-    .data(chords)
-    .join('path')
-    .attr('class', 'chord-ribbon')
-    .attr('d', ribbon)
-    .attr('fill', d => colorFn(d.target.index))
-    .attr('opacity', 0.65)
-    .attr('stroke', '#080808')
-    .attr('stroke-width', 0.5)
-    .on('mouseover', function(event, d) {
-      d3.select(this).attr('opacity', 1);
-      tooltip.style.display = 'block';
-      tooltip.innerHTML = `<strong>${groups[d.source.index]}</strong> ↔ <strong>${groups[d.target.index]}</strong><br>${d.source.value} mentions`;
-    })
-    .on('mousemove', (event) => {
-      tooltip.style.left = event.clientX + 12 + 'px';
-      tooltip.style.top = event.clientY - 10 + 'px';
-    })
-    .on('mouseout', function() {
-      d3.select(this).attr('opacity', 0.65);
-      tooltip.style.display = 'none';
-    });
-}
-
-onScrollVisible(document.getElementById('chordDiagram').closest('.section'), () => {
-  renderChordDiagram();
-});
 
 // ==================== SANKEY DIAGRAM (D3) ====================
 function renderSankeyDiagram() {
